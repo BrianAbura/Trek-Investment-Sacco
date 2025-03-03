@@ -587,6 +587,9 @@
 
                 <!--Nexk of Kin Tab-Pane -->
                 <div class="tab-pane" id="NextofKin">
+                  <div class="card-header-action">
+                    <a data-toggle="modal" data-target="#addkin" class="btn btn-sm btn-primary">Add Next of Kin</a>
+                  </div>
                   <div class="box-body table-responsive">
                     <img class="borderDloadImg" src="../dist/img/excel_download.png" title="Export to Excel" onclick="ExportToExcel('example7', '<?php echo $member['Fullname'] . '-' . $member['MembershipNumber'] ?>-Next of Kin')" />
                     <!-- /.box-header -->
@@ -598,6 +601,7 @@
                           <th>Phone Number</th>
                           <th>Email Address</th>
                           <th>Relationship</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -612,6 +616,9 @@
                             <td><?php echo $member['MSISDN']; ?></td>
                             <td><?php echo $member['EmailAddress']; ?></td>
                             <td><?php echo $member['Relation']; ?></td>
+                            <td> <a data-toggle="modal" data-target="#editNextofkin" data-id="<?php echo $member['Id']; ?>" class="btn btn-sm btn-info">Edit</a>
+                              <a data-toggle="modal" data-target="#delNextofkin" data-id="<?php echo $member['Id']; ?>" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
                           </tr>
                         <?php
                           $cnt++;
@@ -633,6 +640,46 @@
       <!-- /.content -->
     </div>
     <!-- /.content-wrapper -->
+    <!-- Next of Kin div -->
+    <div class="modal fade" id="addkin">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-blue">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+            <h5 class="modal-title">Add Next Of Kin</h5>
+          </div>
+          <form role="form" class="form-content" method="POST" action="ManageNextofKin.php">
+            <input type="hidden" name="kin_action" value="Create">
+            <input type="hidden" name="MembershipNumber" value="<?php echo $MembershipNumber; ?>">
+            <div class="modal-body mt-2">
+              <div class="form-group col-sm-3">
+                <label for="Amount">Fullname</label>
+                <input type="text" class="form-control" name="Fullname" placeholder="Enter Fullname" required autocomplete="off" />
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="Amount">Phone Number</label>
+                <input type="text" class="form-control" name="Phone_Number" placeholder="Enter Phone Number" required autocomplete="off" />
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="Amount">Email Address</label>
+                <input type="email" class="form-control" name="Email_Address" placeholder="Enter Email Address" required autocomplete="off" />
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="Amount">Relationship</label>
+                <input type="text" class="form-control" name="Relationship" placeholder="Enter Relationship" required autocomplete="off" />
+              </div>
+            </div>
+            <div class="modal-footer mt-2">
+              <button type="submit" class="btn btn-success">Add Next of Kin</button>
+              <button type="button" class="btn btn-danger pull-right" data-dismiss="modal">Close</button>
+            </div>
+          </form>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
     <?php include('externalScripts.php'); ?>
 
     <!-- Edit Clients Modal-->
@@ -775,6 +822,66 @@
           hr.send(vars);
         }, function() {});
       }
+    </script>
+
+    <!-- Edit Modal-->
+    <div class="modal fade" id="editNextofkin">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content ">
+
+          <div class="fetched-data"></div> <!--Fetched Header and body-->
+
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
+
+    <script>
+      $(document).ready(function() {
+        $('#editNextofkin').on('show.bs.modal', function(e) {
+          var nokID = $(e.relatedTarget).data('id');
+          var kin_action = 'Edit';
+          $.ajax({
+            type: 'post',
+            url: 'Modal_nok.php', //Here you will fetch records 
+            data: 'nokID=' + nokID + '&kin_action=' + kin_action, //Pass $id
+            success: function(data) {
+              $('.fetched-data').html(data); //Show fetched data from database
+            }
+          });
+        });
+      });
+    </script>
+
+    <!-- Delete Modal-->
+    <div class="modal fade" id="delNextofkin">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content ">
+
+          <div class="fetched-data"></div> <!--Fetched Header and body-->
+
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
+
+    <script>
+      $(document).ready(function() {
+        $('#delNextofkin').on('show.bs.modal', function(e) {
+          var nokID = $(e.relatedTarget).data('id');
+          var kin_action = 'Delete';
+          $.ajax({
+            type: 'post',
+            url: 'Modal_nok.php', //Here you will fetch records 
+            data: 'nokID=' + nokID + '&kin_action=' + kin_action, //Pass $id
+            success: function(data) {
+              $('.fetched-data').html(data); //Show fetched data from database
+            }
+          });
+        });
+      });
     </script>
 
 </body>

@@ -4,8 +4,7 @@
 require_once('../defines/functions.php');
 require_once('../validate.php');
 
-$MembershipNumber = $_SESSION['MembershipNumber'];
-
+$MembershipNumber = htmlspecialchars((isset($_REQUEST['MembershipNumber'])) ?  $_REQUEST['MembershipNumber'] : null);
 $kin_action = htmlspecialchars((isset($_REQUEST['kin_action'])) ?  $_REQUEST['kin_action'] : null);
 $nok_id = htmlspecialchars((isset($_REQUEST['nok_id'])) ?  $_REQUEST['nok_id'] : null);
 
@@ -26,7 +25,7 @@ if ($kin_action == "Create") {
 
     DB::insert('next_of_kin', $NewMember);
     $_SESSION['Success'] = "Next of Kin Saved Successfully.";
-    header('Location:memberProfile.php');
+    header("Location:memberProfile.php?MembershipNumber=" . $MembershipNumber);
 } elseif ($kin_action == "Edit") {
 
     $UpdateMember = array(
@@ -39,10 +38,10 @@ if ($kin_action == "Create") {
 
     DB::update('next_of_kin', $UpdateMember, 'Id=%s', $nok_id);
     $_SESSION['Success'] = "Next of Kin Details updated Successfully.";
-    header('Location:memberProfile.php');
+    header("Location:memberProfile.php?MembershipNumber=" . $MembershipNumber);
 } else {
     // Delete
     DB::delete('next_of_kin', "Id=%s", $nok_id);
     $_SESSION['Success'] = "Next of Kin has been removed.";
-    header('Location:memberProfile.php');
+    header("Location:memberProfile.php?MembershipNumber=" . $MembershipNumber);
 }
