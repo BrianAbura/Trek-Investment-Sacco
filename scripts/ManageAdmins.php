@@ -59,7 +59,7 @@ if($AdminAction == "Add_Admin"){
 
 			#Send the password via mail and sms
 			$SMS = "Dear ".$Member['Fullname']." you have been assigned the role of ".$Designation." for Golden Team Savings and Investment Group. Login on: www.goldenteam.co.ug <br/> Email: ".$Member['EmailAddress']." and temporary password: ".$tempPass.". <br/> Change your password once logged in.".
-			SendSms(formatNumber($Member['MSISDN']), $SMS, 'MEM - '.$tID, "SYSTEM");
+			// SendSms(formatNumber($Member['MSISDN']), $SMS, 'MEM - '.$tID, "SYSTEM");
 			$_SESSION['Success'] = $Member['Fullname']." has been assigned the role of ".$Designation;
 			header('Location: administrativeMembers.php');
 		}

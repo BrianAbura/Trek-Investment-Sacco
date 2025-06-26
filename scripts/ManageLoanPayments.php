@@ -81,10 +81,10 @@ if($lnPaymentAction == "ADD"){
             }
             else{
                 DB::update('loanrequests', array('Balance'=> $NewLoanBalance), 'LoanId=%s', $Loan['LoanId']);
-                $SMS = "Your Loan Payment of UGX".number_format($AmountPaid)." has been received. Your Loan balance is UGX".number_format($NewLoanBalance).". and your due date is ".$Loan['DueDate'];
+                $SMS = "Your Loan Payment of UGX".number_format($AmountPaid)." to TREK Investment Club has been received. Your Loan balance is UGX".number_format($NewLoanBalance).". and your due date is ".$Loan['DueDate'];
             }
 
-            $_SESSION['Success'] = $Member['Fullname']."'s Loan Payment of UGX".number_format($AmountPaid)." has been SUCCESSFULLY added. Loan Balance is UGX".number_format($NewLoanBalance);
+            $_SESSION['Success'] = $Member['Fullname']."'s Loan Payment of UGX".number_format($AmountPaid)." to TREK Investment Club has been SUCCESSFULLY added. Loan Balance is UGX".number_format($NewLoanBalance);
             
             //Send Member the SMS Notification.
             SendSms(formatNumber($Member['MSISDN']), $SMS, $TableId, "SYSTEM");	
@@ -148,11 +148,11 @@ elseif($lnPaymentAction == "EDIT"){
             if($NewLoanBalance <= 0){
                 DB::update('loanrequests', array('Balance'=> $NewLoanBalance,'Status'=>'CLEARED'), 'LoanId=%s', $loanPayment['LoanId']);
             	DB::update('guarantors', array('LoanStatus'=> 'CLEARED'), 'LoanId=%s', $Loan['LoanId']);
-                $SMS = "Your Loan Payment of UGX".number_format($loanPayment['AmountPaid'])." has been updated to UGX".number_format($AmountPaid).". Your Loan is now cleared.";
+                $SMS = "Your Loan Payment of UGX".number_format($loanPayment['AmountPaid'])." to TREK Investment Club has been updated to UGX".number_format($AmountPaid).". Your Loan is now cleared.";
             }
             else{
                 DB::update('loanrequests', array('Balance'=> $NewLoanBalance,'Status'=>'OUTSTANDING'), 'LoanId=%s', $loanPayment['LoanId']);
-                $SMS = "Your Loan Payment of UGX".number_format($loanPayment['AmountPaid'])." has been updated to UGX".number_format($AmountPaid).". and your due date is still ".$loanPayment['DueDate'];
+                $SMS = "Your Loan Payment of UGX".number_format($loanPayment['AmountPaid'])." to TREK Investment Club has been updated to UGX".number_format($AmountPaid).". and your due date is still ".$loanPayment['DueDate'];
             }
 
             $_SESSION['Success'] = $Member['Fullname']."'s Loan Payment of UGX".number_format($AmountPaid)." has been updated Successfully. Loan Balance is UGX".number_format($NewLoanBalance);
