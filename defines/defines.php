@@ -6,8 +6,8 @@ require_once('Logger.php');
 define( 'LOG_FILE', '/var/log/Trekinvestment/Trekinvestment.log');
 
 define( 'DB_HOST', 'localhost' );
-define( 'DB_USER', 'root' );
-define( 'DB_PASS', 'MSql@db24' ); 
+define('DB_USER', 'AburaDB');
+define('DB_PASS', '24@DBpass73');
 define( 'DB_NAME', 'trek_investment' );
 
 /** SMS */
