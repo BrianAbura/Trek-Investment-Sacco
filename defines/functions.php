@@ -1,7 +1,7 @@
 <?php 
 #require_once('/var/www/trekinvestment.com/defines.php');
 require_once('defines.php');
-$log = new Logger(LOG_FILE,Logger::DEBUG);
+// $log = new Logger(LOG_FILE,Logger::DEBUG);
 
 function CreatedBy($id){
 	$sysUser = DB::queryFirstRow('SELECT * from systemusers where AccId=%s',$id);

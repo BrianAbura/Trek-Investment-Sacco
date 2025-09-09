@@ -378,7 +378,7 @@ var max_loan = (MembersumSavings - (0.2 * MembersumSavings)) * 3;
   LoanType.onchange = function(){
 		//If This is the Main Loan
 		if(LoanType.value == "New"){
-			Rate.value = 2;
+			Rate.value = 1;
 			NewInputAmount = InputAmount.value.replace(/,/g,"");
 			Interest.value = (NewInputAmount * (Rate.value/100));
 			if (NewInputAmount == ""){
