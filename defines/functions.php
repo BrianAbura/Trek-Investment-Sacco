@@ -216,6 +216,27 @@ function MembersumSavings($MembershipNumber){
 	return $MembersumSavings['MembersumSavings'];
 }
 
+//Calculate Available Guarantee Balance for a Member
+function AvailableGuaranteeBalance($MembershipNumber, $RequestingMembershipNumber = null){
+	// Get member's total savings
+	$savings = DB::queryFirstRow('SELECT sum(Amount) as TotalSavings from savings where MembershipNumber=%s', $MembershipNumber);
+	$memberSavings = $savings['TotalSavings'] ?? 0;
+	
+	// Get already guaranteed amounts (only accepted guarantees for outstanding/pending loans)
+	$gurantAmount = DB::queryFirstRow('SELECT sum(Amount) as guranteedAmount, sum(AmountPaid) as LoanPaid from guarantors where MembershipNumber=%s AND Status=%s AND LoanStatus IN %ls', $MembershipNumber, 'Accepted', ['OUTSTANDING', 'PENDING APPROVAL']);
+	$totalGurantAmt = $gurantAmount['guranteedAmount'] ?? 0;
+	$totalPaidLoan = $gurantAmount['LoanPaid'] ?? 0;
+	
+	// If member is guaranteeing themselves, apply 20% reserve
+	if($MembershipNumber == $RequestingMembershipNumber){
+		$gurantBalance = ($memberSavings - 0.2 * $memberSavings) - $totalGurantAmt + $totalPaidLoan;
+	} else {
+		$gurantBalance = $memberSavings - $totalGurantAmt + $totalPaidLoan;
+	}
+	
+	return max(0, $gurantBalance); // Return 0 if negative
+}
+
 //Expected Savings All Members
 function ExpectedTotalSavings(){
 	$expectedAmount = 0;
