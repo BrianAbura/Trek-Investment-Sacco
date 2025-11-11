@@ -81,21 +81,21 @@ if ($LoanRequest['Status'] == "OUTSTANDING") {
 	
 	foreach ($GuarantorMembershipNumber as $a => $b) {
 		// Validate guarantor has sufficient available balance
-		$availableBalance = AvailableGuaranteeBalance($GuarantorMembershipNumber[$a], $MembershipNumber);
-		$requestedAmount = str_replace(',', '', $GuarantorAmount[$a]);
+		// $availableBalance = AvailableGuaranteeBalance($GuarantorMembershipNumber[$a], $MembershipNumber);
+		// $requestedAmount = str_replace(',', '', $GuarantorAmount[$a]);
 		
-		if ($requestedAmount > $availableBalance) {
-			$GuarantorMember = DB::queryFirstRow("SELECT * from members where MembershipNumber=%s", $GuarantorMembershipNumber[$a]);
-			$_SESSION['Error'] = "Guarantor <b>" . $GuarantorMember['Fullname'] . "</b> cannot guarantee UGX " . number_format($requestedAmount) . ". Their available guarantee balance is only UGX " . number_format($availableBalance) . ".";
+		// if ($requestedAmount > $availableBalance) {
+		// 	$GuarantorMember = DB::queryFirstRow("SELECT * from members where MembershipNumber=%s", $GuarantorMembershipNumber[$a]);
+		// 	$_SESSION['Error'] = "Guarantor <b>" . $GuarantorMember['Fullname'] . "</b> cannot guarantee UGX " . number_format($requestedAmount) . ". Their available guarantee balance is only UGX " . number_format($availableBalance) . ".";
 			
-			// Delete the loan request that was just created
-			DB::delete('loanrequests', 'LoanId=%s', $LoanId);
-			DB::delete('loanapprovals', 'LoanId=%s', $LoanId);
-			DB::delete('loanhistory', 'LoanId=%s', $LoanId);
+		// 	// Delete the loan request that was just created
+		// 	DB::delete('loanrequests', 'LoanId=%s', $LoanId);
+		// 	DB::delete('loanapprovals', 'LoanId=%s', $LoanId);
+		// 	DB::delete('loanhistory', 'LoanId=%s', $LoanId);
 			
-			header('Location: requestLoan.php');
-			exit();
-		}
+		// 	header('Location: requestLoan.php');
+		// 	exit();
+		// }
 		
 		$gurant_status = "Pending";
 		if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {

@@ -246,7 +246,7 @@
         }
 
 				foreach($loans as $loan){
-          $member = DB::queryFirstRow('SELECT Fullname from members where AccStatus=%s AND MembershipNumber=%s', 'Active', $loan['MembershipNumber']);
+          $member = DB::queryFirstRow('SELECT Fullname from members where MembershipNumber=%s', $loan['MembershipNumber']);
           $approval = DB::queryFirstRow('SELECT * from loanapprovals where LoanId=%s order by Id desc', $loan['LoanId']);
           $approver_role = DB::queryFirstRow('SELECT Designation from roles where RoleId=%s', $approval['RoleId']);
           $apprMsg = $approval['Status'];
@@ -394,7 +394,7 @@
 
 			
 				foreach($loans as $loan){
-          $member = DB::queryFirstRow('SELECT * from members where AccStatus=%s AND MembershipNumber=%s', 'Active', $loan['MembershipNumber']);
+          $member = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $loan['MembershipNumber']);
 				?>
         <tr>
                   <td><?php echo $loan['LoanId'];?></td>
