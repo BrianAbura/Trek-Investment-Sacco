@@ -34,7 +34,7 @@ foreach($Loans as $Loan){
 		//Enforce 10% on the Periods exceeding current
 			$interval = date_diff(date_create($Loan['DateCreated']), date_create($curDate));
 			$interval = ($interval->format('%y')*12) + $interval->format('%m');
-			if($interval >= $Loan['LoanPeriod'])
+			if($interval > $Loan['LoanPeriod'])
 			{
 			$Rate = 10;
 			}
