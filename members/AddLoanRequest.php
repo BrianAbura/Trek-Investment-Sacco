@@ -22,7 +22,8 @@ $GuarantorAmount = str_replace(',', '', $GuarantorAmount);
 
 $Member = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $MembershipNumber);
 
-$max_loan = (MembersumSavings($MembershipNumber) - (0.2 * MembersumSavings($MembershipNumber))) * 3;
+// $max_loan = (MembersumSavings($MembershipNumber) - (0.2 * MembersumSavings($MembershipNumber))) * 3;
+$max_loan = 300000000;
 if ($Principal > $max_loan) {
 	$_SESSION['Error'] = "You cannot make a loan request of more than <b>UGX " . number_format($max_loan) . ".</b>";
 	header('Location: requestLoan.php');

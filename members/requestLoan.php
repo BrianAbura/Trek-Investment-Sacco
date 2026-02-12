@@ -374,7 +374,8 @@ var LoanType = document.getElementById("LoanType");
 var LoanPeriod = document.getElementById("LoanPeriod");
 var TotalAmount = document.getElementById("TotalAmount");
 
-var max_loan = (MembersumSavings - (0.2 * MembersumSavings)) * 3;
+// var max_loan = (MembersumSavings - (0.2 * MembersumSavings)) * 3;
+var max_loan = 300000000;
   LoanType.onchange = function(){
 		//If This is the Main Loan
 		if(LoanType.value == "New"){
