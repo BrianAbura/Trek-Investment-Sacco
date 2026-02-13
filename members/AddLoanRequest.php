@@ -23,7 +23,6 @@ $GuarantorAmount = str_replace(',', '', $GuarantorAmount);
 $Member = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $MembershipNumber);
 
 $max_loan = (MembersumSavings($MembershipNumber) - (0.2 * MembersumSavings($MembershipNumber))) * 3;
-
 if ($Principal > $max_loan) {
 	$_SESSION['Error'] = "You cannot make a loan request of more than <b>UGX " . number_format($max_loan) . ".</b>";
 	header('Location: requestLoan.php');
@@ -79,25 +78,8 @@ if ($LoanRequest['Status'] == "OUTSTANDING") {
 	DB::insert('loanhistory', $LoanHistory);
 
 	//Add the Guarantor - Validate each guarantor's available balance first
-
+	
 	foreach ($GuarantorMembershipNumber as $a => $b) {
-		// Validate guarantor has sufficient available balance
-		// $availableBalance = AvailableGuaranteeBalance($GuarantorMembershipNumber[$a], $MembershipNumber);
-		// $requestedAmount = str_replace(',', '', $GuarantorAmount[$a]);
-
-		// if ($requestedAmount > $availableBalance) {
-		// 	$GuarantorMember = DB::queryFirstRow("SELECT * from members where MembershipNumber=%s", $GuarantorMembershipNumber[$a]);
-		// 	$_SESSION['Error'] = "Guarantor <b>" . $GuarantorMember['Fullname'] . "</b> cannot guarantee UGX " . number_format($requestedAmount) . ". Their available guarantee balance is only UGX " . number_format($availableBalance) . ".";
-
-		// 	// Delete the loan request that was just created
-		// 	DB::delete('loanrequests', 'LoanId=%s', $LoanId);
-		// 	DB::delete('loanapprovals', 'LoanId=%s', $LoanId);
-		// 	DB::delete('loanhistory', 'LoanId=%s', $LoanId);
-
-		// 	header('Location: requestLoan.php');
-		// 	exit();
-		// }
-
 		$gurant_status = "Pending";
 		if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {
 			$gurant_status = "Accepted";
@@ -105,7 +87,7 @@ if ($LoanRequest['Status'] == "OUTSTANDING") {
 		$GuarantorDetails = array(
 			'LoanId' => $LoanId,
 			'MembershipNumber' => $GuarantorMembershipNumber[$a],
-			'Amount' => $requestedAmount,
+			'Amount'=> $GuarantorAmount[$a],
 			'Status' => $gurant_status,
 			'Comments' => "",
 			'LoanStatus' => $Status,
