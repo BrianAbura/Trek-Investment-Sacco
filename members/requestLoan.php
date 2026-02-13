@@ -476,19 +476,19 @@ function sumAmounts(){
     });
     guarantSum.innerHTML = "UGX "+numberWithCommas(sum);
 
-    if(sum != NewInputAmount){
-      infoBox.innerHTML = '<i class="fa fa-exclamation-triangle"></i>'+" The total gurantors contribution must be equal to the Loan Borrowed.";
-      $("#infoBox").show();
-      $(":submit").attr("disabled", true);
-     }
-    else if(NewInputAmount > sum){
-      $("#infoBox").hide();
-      $(":submit").removeAttr("disabled");
-    }
-    else{
-      $("#infoBox").hide();
-      $(":submit").removeAttr("disabled");
-    }
+    // if(sum != NewInputAmount){
+    //   infoBox.innerHTML = '<i class="fa fa-exclamation-triangle"></i>'+" The total gurantors contribution must be equal to the Loan Borrowed.";
+    //   $("#infoBox").show();
+    //   $(":submit").attr("disabled", true);
+    //  }
+    // else if(NewInputAmount > sum){
+    //   $("#infoBox").hide();
+    //   $(":submit").removeAttr("disabled");
+    // }
+    // else{
+    //   $("#infoBox").hide();
+    //   $(":submit").removeAttr("disabled");
+    // }
 }
 </script>
 <script>
