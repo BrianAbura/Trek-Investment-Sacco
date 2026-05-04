@@ -284,19 +284,32 @@ function ExpectedTotalSavings()
 	return $expectedAmount;
 }
 
-//Expected Indivdual Savings
-function ExpectedMemberSavings($MembershipNumber)
+// Effective 1st may 2026
+function newExpectedMemberSavings()
 {
 	$expectedAmount = 0;
 	$CurrentDate = date('Y-m-d');
-	$member = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $MembershipNumber);
+	$StartDate = "2026-05-01"; // Updated Date of May 2026
+	$Years = date('Y', strtotime($CurrentDate)) - date('Y', strtotime($StartDate)); #Full Years
+	$Months = date('m', strtotime($CurrentDate)) - date('m', strtotime($StartDate)); #Full Months
+	$TotalMonths = ($Years * 12) + $Months;
+	$TotalAmount = $TotalMonths * 50000;
+	$expectedAmount += $TotalAmount;
+	return $expectedAmount;
+}
+
+//Expected Indivdual Savings
+function ExpectedMemberSavings()
+{
+	$expectedAmount = 0;
+	$CurrentDate = date('Y-m-d');
 	$StartDate = '2022-01-01'; //From the date they joined
 	$Years = date('Y', strtotime($CurrentDate)) - date('Y', strtotime($StartDate)); #Full Years
 	$Months = date('m', strtotime($CurrentDate)) - date('m', strtotime($StartDate)); #Full Months
 	$TotalMonths = ($Years * 12) + $Months;
 	$TotalAmount = $TotalMonths * 200000;
 	$expectedAmount += $TotalAmount;
-	return $expectedAmount;
+	return ($expectedAmount + newExpectedMemberSavings());
 }
 
 //Outstanding Savings for all Members
@@ -305,7 +318,7 @@ function outstandingSavings()
 	$sumOutstanding = 0;
 	$members = DB::query('SELECT * from members where AccStatus=%s', 'Active');
 	foreach ($members as $member) {
-		$expectedSaving = ExpectedMemberSavings($member['MembershipNumber']);
+		$expectedSaving = ExpectedMemberSavings();
 		$currentSaving = MembersumSavings($member['MembershipNumber']);
 		$outstandingSaving = $expectedSaving - $currentSaving;
 

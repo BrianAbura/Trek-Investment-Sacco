@@ -34,7 +34,7 @@ if($SavingAction == "Add_New_Savings"){
 
 	$CheckSaving = DB::queryFirstRow('SELECT sum(Amount) from savings where MembershipNumber=%s AND Narration=%s', $MembershipNumber, $Narration);
 	var_dump($CheckSaving);
-	if($CheckSaving['sum(Amount)'] == 200000){
+	if($CheckSaving['sum(Amount)'] == 250000){
 		$_SESSION['Error'] = $Fullname."'s ".$Narration." already exists.";
 	}
 	else{
@@ -80,7 +80,7 @@ if($SavingAction == "Add_New_Savings"){
 
 			#Check New Balances
 			$query = DB::queryFirstRow('SELECT sum(Amount) from savings where Narration=%s and MembershipNumber=%s', $Narration, $MembershipNumber);
-			$Balance = 200000 - $query['sum(Amount)'];
+			$Balance = 250000 - $query['sum(Amount)'];
 			if($Balance !=0){
 				$_SESSION['Success'] = $Fullname."'s " .$Narration." of UGX".number_format($Amount)." has been captured Successfully. <br/> Balance on ".$Narration." is UGX".number_format($Balance);
 			}
