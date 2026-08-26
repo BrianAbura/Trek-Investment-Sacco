@@ -12,8 +12,8 @@ $Rate = htmlspecialchars((isset($_REQUEST['Rate'])) ?  $_REQUEST['Rate'] : null)
 $Interest = htmlspecialchars((isset($_REQUEST['Interest'])) ?  $_REQUEST['Interest'] : null);
 $TotalAmount = htmlspecialchars((isset($_REQUEST['TotalAmount'])) ?  $_REQUEST['TotalAmount'] : null);
 $LoanPeriod = htmlspecialchars((isset($_REQUEST['LoanPeriod'])) ?  $_REQUEST['LoanPeriod'] : null);
-$GuarantorMembershipNumber = (isset($_REQUEST['GuarantorMembershipNumber'])) ?  $_REQUEST['GuarantorMembershipNumber'] : null;
-$GuarantorAmount = (isset($_REQUEST['GuarantorAmount'])) ?  $_REQUEST['GuarantorAmount'] : null;
+$GuarantorMembershipNumber = $_REQUEST['GuarantorMembershipNumber'];
+$GuarantorAmount = $_REQUEST['GuarantorAmount'];
 $Status = "PENDING APPROVAL";
 $Principal = str_replace(',', '', $Principal);
 $Interest = str_replace(',', '', $Interest);
@@ -78,27 +78,31 @@ if ($LoanRequest['Status'] == "OUTSTANDING") {
 	DB::insert('loanhistory', $LoanHistory);
 
 	//Add the Guarantor - Validate each guarantor's available balance first
-	
-	foreach ($GuarantorMembershipNumber as $a => $b) {
-		$gurant_status = "Pending";
-		if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {
-			$gurant_status = "Accepted";
-		}
-		$GuarantorDetails = array(
-			'LoanId' => $LoanId,
-			'MembershipNumber' => $GuarantorMembershipNumber[$a],
-			'Amount'=> $GuarantorAmount[$a],
-			'Status' => $gurant_status,
-			'Comments' => "",
-			'LoanStatus' => $Status,
-		);
-		DB::insert('guarantors', $GuarantorDetails);
-		$TableId = "GR - " . DB::insertId();
+	if (!empty($GuarantorMembershipNumber)) {
+		foreach ($GuarantorMembershipNumber as $a => $b) {
+			if (empty($GuarantorMembershipNumber[$a]) || empty($GuarantorAmount[$a])) {
+				continue;
+			}
+			$gurant_status = "Pending";
+			if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {
+				$gurant_status = "Accepted";
+			}
+			$GuarantorDetails = array(
+				'LoanId' => $LoanId,
+				'MembershipNumber' => $GuarantorMembershipNumber[$a],
+				'Amount' => $GuarantorAmount[$a],
+				'Status' => $gurant_status,
+				'Comments' => "",
+				'LoanStatus' => $Status,
+			);
+			DB::insert('guarantors', $GuarantorDetails);
+			$TableId = "GR - " . DB::insertId();
 
-		//Send the SMS to the Guarantors
-		$GuarantorMember = DB::queryFirstRow("SELECT * from members where MembershipNumber=%s", $GuarantorMembershipNumber[$a]);
-		$SMS = "Dear " . $GuarantorMember['Fullname'] . ", " . $Member['Fullname'] . " is requesting you to be a Loan Guarantor. Please login to your Trek Investment account to accept or decline the request.";
-		// SendSms(formatNumber($GuarantorMember['MSISDN']), $SMS, $TableId, "SYSTEM");
+			//Send the SMS to the Guarantors
+			$GuarantorMember = DB::queryFirstRow("SELECT * from members where MembershipNumber=%s", $GuarantorMembershipNumber[$a]);
+			$SMS = "Dear " . $GuarantorMember['Fullname'] . ", " . $Member['Fullname'] . " is requesting you to be a Loan Guarantor. Please login to your Trek Investment account to accept or decline the request.";
+			// SendSms(formatNumber($GuarantorMember['MSISDN']), $SMS, $TableId, "SYSTEM");
+		}
 	}
 	//End Task			
 	$_SESSION['Success'] = "Your loan request has been received and is pending approval.";

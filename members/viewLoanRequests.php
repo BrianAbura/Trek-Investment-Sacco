@@ -193,10 +193,14 @@
                       '<?php
                         $cnt = 1;
                         $guarantors = DB::query('SELECT * from guarantors where LoanId=%s', $loan['LoanId']);
-                        foreach ($guarantors as $guarantor) {
-                          $Guarantor_name = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $guarantor['MembershipNumber']);
-                          echo $cnt . '. ' . $Guarantor_name['Fullname'] . ' >>> |' . number_format($guarantor['Amount']) . '| >>> |' . $guarantor['Status'] . '| >> ' . $guarantor['Comments'] . '<br/>';
-                          $cnt++;
+                        if (empty($guarantors)) {
+                          echo 'No guarantors found';
+                        } else {
+                          foreach ($guarantors as $guarantor) {
+                            $Guarantor_name = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $guarantor['MembershipNumber']);
+                            echo $cnt . '. ' . $Guarantor_name['Fullname'] . ' >>> |' . number_format($guarantor['Amount'] ?? null) . '| >>> |' . $guarantor['Status'] . '| >> ' . $guarantor['Comments'] . '<br/>';
+                            $cnt++;
+                          }
                         }
                         ?>'
                       );">
