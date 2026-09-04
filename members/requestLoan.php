@@ -189,6 +189,7 @@
               <!-- form start -->
               <form role="form" class="form-content" method="POST" action="AddLoanRequest.php" enctype="multipart/form-data">
                 <input type="hidden" id="MembersumSavings" value="<?php echo MembersumSavings($_SESSION['MembershipNumber']); ?>">
+                <input type="hidden" id="AvailableSavings" value="<?php echo AvailableSavings($_SESSION['MembershipNumber']); ?>">
                 <div class="box-body">
                   <div class="row">
                     <div class="form-group col-sm-2">
@@ -224,13 +225,24 @@
                     </div>
 
                   </div>
+                  <div class="row">
+                    <div class="col-md-12">
+                      <div class="alert alert-info" style="margin-bottom: 10px; margin-top: 10px;">
+                        <strong>Maximum Borrowing Amount (without guarantors):</strong> UGX <?php echo number_format(AvailableSavings($_SESSION['MembershipNumber'])); ?>
+                      </div>
+                      <p id="guarantorMessage" class="text-muted"></p>
+                    </div>
+                  </div>
                   <hr />
 
-                  <div class="row col-lg-8">
+                  <div id="guarantorSection" class="row col-lg-8" style="display: none;">
                     <div class="col table-responsive">
-                      <h4 style="color:firebrick; padding-bottom: 10px">Guarantors
+                      <h4 style="color:firebrick; padding-bottom: 10px">Additional Guarantors
                         <a href='javascript:void(0);' style="font-size:14px;" id='addMore'><label> Add More <span class="glyphicon glyphicon-plus"></span></label></a>
                       </h4>
+                      <p id="borrowerGuaranteeNotice" style="color:brown; display: none;">
+                        <strong>Note:</strong> You will automatically be added as the first guarantor.
+                      </p>
                       <p style="color:brown"><strong>Note:</strong> Guarantors are displayed with the maximum amount that they can gurantee.
                         Each guarantor must Accept or Reject the guarantee request before the loan is issued.</p>
 
@@ -244,27 +256,19 @@
                         <tbody>
                           <tr>
                             <td>
-                              <select class="form-control" name="GuarantorMembershipNumber[]" id="GuarantorAccNumber" >
+                              <select class="form-control GuarantorSelect" name="GuarantorMembershipNumber[]" id="GuarantorAccNumber">
                                 <option></option>
                                 <?php
                                 $members = DB::query('SELECT * from members where AccStatus=%s', 'Active');
                                 foreach ($members as $member) {
-                                  $savings = DB::queryFirstRow('SELECT sum(Amount) as TotalSavings from savings where MembershipNumber=%s', $member['MembershipNumber']);
-                                  $memberSavings = $savings['TotalSavings'];
-
+                                  if ($member['MembershipNumber'] == $_SESSION['MembershipNumber']) {
+                                    continue;
+                                  }
                                   //Should not have any running loan
                                   $loans = DB::queryFirstRow('SELECT * from loanrequests where MembershipNumber=%s AND Status IN %ls', $member['MembershipNumber'], ['OUTSTANDING', 'PENDING APPROVAL', 'APPROVED']);
                                   if (!$loans) {
                                     $member_name = $member['Fullname'];
-                                    $gurantAmount = DB::queryFirstRow('SELECT sum(Amount) as guranteedAmount, sum(AmountPaid) as LoanPaid from guarantors where MembershipNumber=%s AND Status=%s AND LoanStatus IN %ls', $member['MembershipNumber'], 'Accepted', ['OUTSTANDING', 'PENDING APPROVAL']);
-                                    $totalGurantAmt =  $gurantAmount['guranteedAmount'];
-                                    $totalPaidLoan = $gurantAmount['LoanPaid'];
-
-                                    if ($member['MembershipNumber'] == $_SESSION['MembershipNumber']) {
-                                      $gurantBalance = ($memberSavings - 0.2 * ($memberSavings))  - $totalGurantAmt + $totalPaidLoan;
-                                    } else {
-                                      $gurantBalance = $memberSavings - $totalGurantAmt + $totalPaidLoan;
-                                    }
+                                    $gurantBalance = AvailableSavings($member['MembershipNumber']);
 
                                     if ($gurantBalance > 0) {
                                       #Restricted to only those that still have money to guarantee
@@ -276,7 +280,7 @@
                               </select>
                             </td>
                             <td>
-                              <input type="text" class="form-control GuarantorAmount" name="GuarantorAmount[]" onkeyup="sumAmounts()" placeholder="Enter Guarantor's Contribution" autocomplete="off"  />
+                              <input type="text" class="form-control GuarantorAmount" name="GuarantorAmount[]" onkeyup="sumAmounts()" placeholder="Enter Guarantor's Contribution" autocomplete="off" />
                             </td>
                             <td>
                               <a href='javascript:void(0);' style="font-size:12px;" id='DeleteRow'><i class="fa fa-close" style="color:red"></i></a>
@@ -339,7 +343,7 @@
             <b>And whereas,</b><br />
             The lender as a financing agency is desirous to lending the borrower and the borrower is desirous of borrowing from the lender and the terms and conditions here in below agreed.<br />
             <b>THIS AGREEMENT WITNESSETH AS BELOW,</b><br />
-            The lender lends the borrower the principal requested for the specified period to be paid to the lender as principle and interest (Total Amount) there at the rate of <b>3%</b> per month at reducing balance.<br /><br />
+            The lender lends the borrower the principal requested for the specified period to be paid to the lender as principle and interest (Total Amount) there at the rate of <b>1%</b> per month at reducing balance.<br /><br />
 
             The borrower will inform the lender in time in case of indebtedness and failure to pay so that a new agreement/contract can be entered into and so
             will the lender notify the borrower about his/her current obligation and the period when the contract is expiring.<br /><br />
@@ -370,6 +374,7 @@
         return val;
       }
       var MembersumSavings = document.getElementById("MembersumSavings").value;
+      var AvailableSavings = document.getElementById("AvailableSavings").value;
       var InputAmount = document.getElementById("InputAmount");
       var Rate = document.getElementById("Rate");
       var Interest = document.getElementById("Interest");
@@ -401,6 +406,7 @@
             LoanPeriod.value = 0;
           }
           //*** END Loan Period changes based on the Input Amount END ***//
+          updateGuarantorRequirements();
         }
       }
       //When the Amount Changes
@@ -427,6 +433,7 @@
           LoanPeriod.value = 0;
         }
         //*** END Loan Period changes based on the Input Amount END ***//
+        updateGuarantorRequirements();
       }
     </script>
 
@@ -443,6 +450,7 @@
             .replace(/\D/g, "")
             .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         });
+        updateGuarantorRequirements();
       });
     </script>
     <script>
@@ -462,25 +470,65 @@
       guarantSum.innerHTML = "UGX 0";
 
       var infoBox = document.getElementById('infoBox');
+      var guarantorSection = document.getElementById('guarantorSection');
+      var borrowerGuaranteeNotice = document.getElementById('borrowerGuaranteeNotice');
+      var guarantorMessage = document.getElementById('guarantorMessage');
+
+      function updateGuarantorRequirements() {
+        var loan = parseFloat(InputAmount.value.replace(/,/g, "")) || 0;
+        var available = parseFloat(AvailableSavings) || 0;
+
+        if (loan > available) {
+          guarantorSection.style.display = 'block';
+          if (borrowerGuaranteeNotice) borrowerGuaranteeNotice.style.display = 'block';
+          var remaining = loan - available;
+          if (guarantorMessage) {
+            guarantorMessage.innerHTML = 'Your available savings of <strong>UGX ' + numberWithCommas(available) + '</strong> will be used. ' +
+              'Additional guarantors must cover <strong>UGX ' + numberWithCommas(remaining) + '</strong>.';
+          }
+          if (borrowerGuaranteeNotice) {
+            borrowerGuaranteeNotice.innerHTML = '<strong>Note:</strong> You will automatically be added as the first guarantor for <strong>UGX ' + numberWithCommas(available) + '</strong>.';
+          }
+          sumAmounts();
+        } else {
+          guarantorSection.style.display = 'none';
+          if (borrowerGuaranteeNotice) borrowerGuaranteeNotice.style.display = 'none';
+          if (guarantorMessage) {
+            guarantorMessage.innerHTML = 'No guarantors are required because your loan is within your available savings.';
+          }
+          $("#infoBox").hide();
+          $("#submitLoanBtn").prop("disabled", false);
+        }
+      }
 
       function sumAmounts() {
         var sum = 0;
         $('.GuarantorAmount').each(function() {
-          sum += parseFloat(this.value.replace(/,/g, ""));
+          var val = parseFloat(this.value.replace(/,/g, ""));
+          if (!isNaN(val)) {
+            sum += val;
+          }
         });
         guarantSum.innerHTML = "UGX " + numberWithCommas(sum);
 
-        // if (sum != NewInputAmount) {
-        //   infoBox.innerHTML = '<i class="fa fa-exclamation-triangle"></i>' + " The total gurantors contribution must be equal to the Loan Borrowed.";
-        //   $("#infoBox").show();
-        //   // $(":submit").attr("disabled", true);
-        // } else if (NewInputAmount > sum) {
-        //   $("#infoBox").hide();
-        //   // $(":submit").removeAttr("disabled");
-        // } else {
-        //   $("#infoBox").hide();
-        //   // $(":submit").removeAttr("disabled");
-        // }
+        var loan = parseFloat(InputAmount.value.replace(/,/g, "")) || 0;
+        var available = parseFloat(AvailableSavings) || 0;
+        var required = Math.max(0, loan - available);
+
+        if (loan > available) {
+          if (sum < required) {
+            var shortfall = required - sum;
+            infoBox.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Additional guarantors are short by UGX ' + numberWithCommas(shortfall) + '.';
+            $("#infoBox").show();
+            $("#submitLoanBtn").prop("disabled", true);
+          } else {
+            $("#infoBox").hide();
+            $("#submitLoanBtn").prop("disabled", false);
+          }
+        } else {
+          $("#infoBox").hide();
+          $("#submitLoanBtn").prop("disabled", false);
+        }
       }
     </script>
     <script>
@@ -497,6 +545,22 @@
             $(this).closest("tr").remove();
           } else {
             alertify.alert("Error!", "Sorry you Cannot remove this row.");
+          }
+        });
+
+        //Prevent selecting the same guarantor more than once
+        $('#GuarantorTable').on('change', '.GuarantorSelect', function() {
+          var selected = $(this).val();
+          if (!selected) return;
+          var selectedCount = 0;
+          $('.GuarantorSelect').each(function() {
+            if ($(this).val() == selected) {
+              selectedCount++;
+            }
+          });
+          if (selectedCount > 1) {
+            alertify.alert('Error!', 'This guarantor has already been selected. Please choose a different one.');
+            $(this).val('');
           }
         });
       });
@@ -517,6 +581,46 @@
           todayHighlight: true,
           startDate: "currentDate",
         })
+      })
+
+      //Loan submission validation
+      $(function() {
+        $('.form-content').on('submit', function(e) {
+          var loan = parseFloat($('#InputAmount').val().replace(/,/g, "")) || 0;
+          var available = parseFloat($('#AvailableSavings').val()) || 0;
+
+          //Check for duplicate guarantors
+          var selectedGuarantors = [];
+          var duplicate = false;
+          $('.GuarantorSelect').each(function() {
+            var v = $(this).val();
+            if (v) {
+              if (selectedGuarantors.indexOf(v) >= 0) {
+                duplicate = true;
+              }
+              selectedGuarantors.push(v);
+            }
+          });
+          if (duplicate) {
+            e.preventDefault();
+            alertify.alert('Error!', 'You have selected the same guarantor more than once. Please use a different guarantor for each row.');
+            return false;
+          }
+
+          if (loan > available) {
+            var required = loan - available;
+            var sum = 0;
+            $('.GuarantorAmount').each(function() {
+              var v = parseFloat($(this).val().replace(/,/g, "")) || 0;
+              sum += v;
+            });
+            if (sum < required) {
+              e.preventDefault();
+              alertify.alert('Error!', 'Additional guarantors must collectively cover UGX ' + numberWithCommas(required) + '. Currently covered: UGX ' + numberWithCommas(sum) + '.');
+              return false;
+            }
+          }
+        });
       })
     </script>
 </body>

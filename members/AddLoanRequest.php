@@ -29,18 +29,71 @@ if ($Principal > $max_loan) {
 	exit();
 }
 
-//Add the Main Loan Now
-//Does Member have an Outstanding Main Loan
-$LoanRequest = DB::queryFirstRow('SELECT * from loanrequests where MembershipNumber=%s AND (Status=%s or Status=%s) AND LoanType=%s', $MembershipNumber, 'OUTSTANDING', 'PENDING APPROVAL', 'Main');
-if ($LoanRequest['Status'] == "OUTSTANDING") {
-	$_SESSION['Error'] = "You still have an outstanding Main loan of UGX" . number_format($LoanRequest['Balance']);
+//Check whether the member already has an outstanding or pending loan
+$LoanRequest = DB::queryFirstRow('SELECT * from loanrequests where MembershipNumber=%s AND (Status=%s or Status=%s)', $MembershipNumber, 'OUTSTANDING', 'PENDING APPROVAL');
+if ($LoanRequest && $LoanRequest['Status'] == "OUTSTANDING") {
+	$_SESSION['Error'] = "You still have an outstanding loan of UGX " . number_format($LoanRequest['Balance']) . ".";
 	header('Location: requestLoan.php');
 	exit();
-} elseif ($LoanRequest['Status'] == "PENDING APPROVAL") {
+} elseif ($LoanRequest && $LoanRequest['Status'] == "PENDING APPROVAL") {
 	$_SESSION['Error'] = "You have a loan pending approval.";
 	header('Location: requestLoan.php');
 	exit();
 } else {
+	$availableSavings = AvailableSavings($MembershipNumber);
+	$amountAboveBorrower = $Principal - $availableSavings;
+
+	//Validate additional guarantor coverage when the loan exceeds the borrower's available savings
+	if ($amountAboveBorrower > 0) {
+		$additionalCovered = 0;
+		$seenGuarantors = array();
+		if (empty($GuarantorMembershipNumber) || !is_array($GuarantorMembershipNumber)) {
+			$_SESSION['Error'] = "Additional guarantors are required to cover UGX " . number_format($amountAboveBorrower) . " above your available savings.";
+			header('Location: requestLoan.php');
+			exit();
+		}
+		foreach ($GuarantorMembershipNumber as $a => $b) {
+			if (empty($GuarantorMembershipNumber[$a]) || empty($GuarantorAmount[$a])) {
+				continue;
+			}
+			//Skip if the borrower themselves are submitted; they are handled automatically
+			if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {
+				continue;
+			}
+			//Prevent the same guarantor from being selected more than once
+			if (in_array($GuarantorMembershipNumber[$a], $seenGuarantors)) {
+				$_SESSION['Error'] = "Guarantor " . $GuarantorMembershipNumber[$a] . " has been added more than once. Please use a single row for each guarantor.";
+				header('Location: requestLoan.php');
+				exit();
+			}
+			$seenGuarantors[] = $GuarantorMembershipNumber[$a];
+			$GuarantorMember = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s AND AccStatus=%s', $GuarantorMembershipNumber[$a], 'Active');
+			if (!$GuarantorMember) {
+				$_SESSION['Error'] = "Invalid guarantor selected.";
+				header('Location: requestLoan.php');
+				exit();
+			}
+			$existingLoan = DB::queryFirstRow('SELECT * from loanrequests where MembershipNumber=%s AND Status IN %ls', $GuarantorMembershipNumber[$a], ['OUTSTANDING', 'PENDING APPROVAL', 'APPROVED']);
+			if ($existingLoan) {
+				$_SESSION['Error'] = "Guarantor " . $GuarantorMember['Fullname'] . " is not eligible because they have an existing loan.";
+				header('Location: requestLoan.php');
+				exit();
+			}
+			$guarantorAvailable = AvailableSavings($GuarantorMembershipNumber[$a]);
+			if ($GuarantorAmount[$a] > $guarantorAvailable) {
+				$_SESSION['Error'] = "Guarantor " . $GuarantorMember['Fullname'] . " cannot guarantee more than UGX " . number_format($guarantorAvailable) . ".";
+				header('Location: requestLoan.php');
+				exit();
+			}
+			$additionalCovered += $GuarantorAmount[$a];
+		}
+		if ($additionalCovered < $amountAboveBorrower) {
+			$_SESSION['Error'] = "Additional guarantors must cover UGX " . number_format($amountAboveBorrower) . ". Currently covered: UGX " . number_format($additionalCovered) . ".";
+			header('Location: requestLoan.php');
+			exit();
+		}
+	}
+
 	//Add the Main Loan
 	$NewLoan = array(
 		'LoanId' => $LoanId,
@@ -77,21 +130,34 @@ if ($LoanRequest['Status'] == "OUTSTANDING") {
 	);
 	DB::insert('loanhistory', $LoanHistory);
 
-	//Add the Guarantor - Validate each guarantor's available balance first
-	if (!empty($GuarantorMembershipNumber)) {
+	//Add the borrower as the first guarantor when the loan requires additional backing
+	if ($amountAboveBorrower > 0 && $availableSavings > 0) {
+		$BorrowerGuarantee = array(
+			'LoanId' => $LoanId,
+			'MembershipNumber' => $MembershipNumber,
+			'Amount' => $availableSavings,
+			'Status' => 'Accepted',
+			'Comments' => "",
+			'LoanStatus' => $Status,
+		);
+		DB::insert('guarantors', $BorrowerGuarantee);
+	}
+
+	//Add the additional guarantors
+	if ($amountAboveBorrower > 0 && !empty($GuarantorMembershipNumber) && is_array($GuarantorMembershipNumber)) {
 		foreach ($GuarantorMembershipNumber as $a => $b) {
 			if (empty($GuarantorMembershipNumber[$a]) || empty($GuarantorAmount[$a])) {
 				continue;
 			}
-			$gurant_status = "Pending";
+			//The borrower is handled separately above
 			if ($GuarantorMembershipNumber[$a] == $MembershipNumber) {
-				$gurant_status = "Accepted";
+				continue;
 			}
 			$GuarantorDetails = array(
 				'LoanId' => $LoanId,
 				'MembershipNumber' => $GuarantorMembershipNumber[$a],
 				'Amount' => $GuarantorAmount[$a],
-				'Status' => $gurant_status,
+				'Status' => 'Pending',
 				'Comments' => "",
 				'LoanStatus' => $Status,
 			);

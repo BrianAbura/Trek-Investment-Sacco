@@ -246,6 +246,75 @@ function MembersumSavings($MembershipNumber)
 	return $MembersumSavings['MembersumSavings'];
 }
 
+//Member's available savings after deducting amounts already committed as outstanding guarantees
+function AvailableSavings($MembershipNumber)
+{
+	$savings = MembersumSavings($MembershipNumber);
+	$savings = $savings ? $savings : 0;
+	$gurantAmount = DB::queryFirstRow('SELECT sum(Amount) as guranteedAmount, sum(AmountPaid) as LoanPaid from guarantors where MembershipNumber=%s AND Status=%s AND LoanStatus IN %ls', $MembershipNumber, 'Accepted', ['OUTSTANDING', 'PENDING APPROVAL']);
+	$totalGurantAmt = $gurantAmount['guranteedAmount'] ?? 0;
+	$totalPaidLoan = $gurantAmount['LoanPaid'] ?? 0;
+	$available = $savings - $totalGurantAmt + $totalPaidLoan;
+	return max(0, $available);
+}
+
+//Distribute loan payments against guarantor guarantees.
+//Other guarantors are paid off first; any remainder is then applied to the borrower's self-guarantee.
+function RecalculateGuarantorAmounts($LoanId)
+{
+	$loan = DB::queryFirstRow('SELECT * from loanrequests where LoanId=%s', $LoanId);
+	if (!$loan) {
+		return;
+	}
+	$borrowerNumber = $loan['MembershipNumber'];
+
+	$totalPaidRow = DB::queryFirstRow('SELECT sum(AmountPaid) as TotalPaid from loanpayments where LoanId=%s', $LoanId);
+	$totalPaid = $totalPaidRow['TotalPaid'] ? $totalPaidRow['TotalPaid'] : 0;
+
+	//Reset allocated payments so the recalculation is idempotent
+	DB::update('guarantors', array('AmountPaid' => 0), 'LoanId=%s', $LoanId);
+
+	$guarantors = DB::query('SELECT * from guarantors where LoanId=%s ORDER BY Id ASC', $LoanId);
+	$remaining = $totalPaid;
+
+	//Pay non-borrower guarantors first
+	foreach ($guarantors as $g) {
+		if ($remaining <= 0) {
+			break;
+		}
+		if ($g['MembershipNumber'] == $borrowerNumber) {
+			continue;
+		}
+		if ($g['Status'] == 'Rejected' || $g['LoanStatus'] == 'REJECTED') {
+			continue;
+		}
+		$toApply = min($remaining, $g['Amount']);
+		if ($toApply > 0) {
+			DB::update('guarantors', array('AmountPaid' => $toApply), 'Id=%s', $g['Id']);
+			$remaining -= $toApply;
+		}
+	}
+
+	//Then apply any remainder to the borrower's self-guarantee
+	foreach ($guarantors as $g) {
+		if ($remaining <= 0) {
+			break;
+		}
+		if ($g['MembershipNumber'] != $borrowerNumber) {
+			continue;
+		}
+		if ($g['Status'] == 'Rejected' || $g['LoanStatus'] == 'REJECTED') {
+			continue;
+		}
+		$toApply = min($remaining, $g['Amount']);
+		if ($toApply > 0) {
+			DB::update('guarantors', array('AmountPaid' => $toApply), 'Id=%s', $g['Id']);
+			$remaining -= $toApply;
+		}
+		break;
+	}
+}
+
 //Calculate Available Guarantee Balance for a Member
 // function AvailableGuaranteeBalance($MembershipNumber, $RequestingMembershipNumber = null){
 // 	// Get member's total savings
