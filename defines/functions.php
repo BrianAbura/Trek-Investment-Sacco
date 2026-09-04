@@ -246,12 +246,12 @@ function MembersumSavings($MembershipNumber)
 	return $MembersumSavings['MembersumSavings'];
 }
 
-//Member's available savings after deducting amounts already committed as outstanding guarantees
+//Member's available savings after deducting amounts already committed as outstanding/pending guarantees
 function AvailableSavings($MembershipNumber)
 {
 	$savings = MembersumSavings($MembershipNumber);
 	$savings = $savings ? $savings : 0;
-	$gurantAmount = DB::queryFirstRow('SELECT sum(Amount) as guranteedAmount, sum(AmountPaid) as LoanPaid from guarantors where MembershipNumber=%s AND Status=%s AND LoanStatus IN %ls', $MembershipNumber, 'Accepted', ['OUTSTANDING', 'PENDING APPROVAL']);
+	$gurantAmount = DB::queryFirstRow('SELECT sum(Amount) as guranteedAmount, sum(AmountPaid) as LoanPaid from guarantors where MembershipNumber=%s AND Status IN %ls AND LoanStatus IN %ls', $MembershipNumber, ['Accepted', 'Pending'], ['OUTSTANDING', 'PENDING APPROVAL']);
 	$totalGurantAmt = $gurantAmount['guranteedAmount'] ?? 0;
 	$totalPaidLoan = $gurantAmount['LoanPaid'] ?? 0;
 	$available = $savings - $totalGurantAmt + $totalPaidLoan;
