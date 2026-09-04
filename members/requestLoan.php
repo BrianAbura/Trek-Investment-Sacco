@@ -188,8 +188,9 @@
 
               <!-- form start -->
               <form role="form" class="form-content" method="POST" action="AddLoanRequest.php" enctype="multipart/form-data">
+                <?php $memberAvailableSavings = AvailableSavings($_SESSION['MembershipNumber']); ?>
                 <input type="hidden" id="MembersumSavings" value="<?php echo MembersumSavings($_SESSION['MembershipNumber']); ?>">
-                <input type="hidden" id="AvailableSavings" value="<?php echo AvailableSavings($_SESSION['MembershipNumber']); ?>">
+                <input type="hidden" id="AvailableSavings" value="<?php echo $memberAvailableSavings; ?>">
                 <div class="box-body">
                   <div class="row">
                     <div class="form-group col-sm-2">
@@ -228,8 +229,13 @@
                   <div class="row">
                     <div class="col-md-12">
                       <div class="alert alert-info" style="margin-bottom: 10px; margin-top: 10px;">
-                        <strong>Maximum Borrowing Amount (without guarantors):</strong> UGX <?php echo number_format(AvailableSavings($_SESSION['MembershipNumber'])); ?>
+                        <strong>Maximum Borrowing Amount (without guarantors):</strong> UGX <?php echo number_format($memberAvailableSavings); ?>
                       </div>
+                      <?php if ($memberAvailableSavings <= 0) { ?>
+                        <div class="alert alert-danger">
+                          <strong>Notice:</strong> You currently have no available savings. You cannot request a loan at this time.
+                        </div>
+                      <?php } ?>
                       <p id="guarantorMessage" class="text-muted"></p>
                     </div>
                   </div>
@@ -312,7 +318,7 @@
 
                   <!-- /.box-body -->
                   <div class="box-footer">
-                    <button type="submit" id="submitLoanBtn" class="btn btn-success">Submit Loan Request</button>
+                    <button type="submit" id="submitLoanBtn" class="btn btn-success" <?php if ($memberAvailableSavings <= 0) echo 'disabled'; ?>>Submit Loan Request</button>
                     <button type="reset" class="btn btn-default">Reset Form</button>
                     <a class="btn btn-danger" href="viewLoanRequests.php">Cancel</a>
                   </div>
@@ -477,6 +483,17 @@
       function updateGuarantorRequirements() {
         var loan = parseFloat(InputAmount.value.replace(/,/g, "")) || 0;
         var available = parseFloat(AvailableSavings) || 0;
+
+        if (available <= 0) {
+          if (guarantorMessage) {
+            guarantorMessage.innerHTML = '<span class="text-danger">You currently have no available savings. You cannot request a loan at this time.</span>';
+          }
+          guarantorSection.style.display = 'none';
+          if (borrowerGuaranteeNotice) borrowerGuaranteeNotice.style.display = 'none';
+          $("#infoBox").hide();
+          $("#submitLoanBtn").prop("disabled", true);
+          return;
+        }
 
         if (loan > available) {
           guarantorSection.style.display = 'block';

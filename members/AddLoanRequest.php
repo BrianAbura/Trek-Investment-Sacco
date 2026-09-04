@@ -22,12 +22,12 @@ $GuarantorAmount = str_replace(',', '', $GuarantorAmount);
 
 $Member = DB::queryFirstRow('SELECT * from members where MembershipNumber=%s', $MembershipNumber);
 
-$max_loan = (MembersumSavings($MembershipNumber) - (0.2 * MembersumSavings($MembershipNumber))) * 3;
-if ($Principal > $max_loan) {
-	$_SESSION['Error'] = "You cannot make a loan request of more than <b>UGX " . number_format($max_loan) . ".</b>";
-	header('Location: requestLoan.php');
-	exit();
-}
+// $max_loan = (MembersumSavings($MembershipNumber) - (0.2 * MembersumSavings($MembershipNumber))) * 3;
+// if ($Principal > $max_loan) {
+// 	$_SESSION['Error'] = "You cannot make a loan request of more than <b>UGX " . number_format($max_loan) . ".</b>";
+// 	header('Location: requestLoan.php');
+// 	exit();
+// }
 
 //Check whether the member already has an outstanding or pending loan
 $LoanRequest = DB::queryFirstRow('SELECT * from loanrequests where MembershipNumber=%s AND (Status=%s or Status=%s)', $MembershipNumber, 'OUTSTANDING', 'PENDING APPROVAL');
@@ -41,6 +41,11 @@ if ($LoanRequest && $LoanRequest['Status'] == "OUTSTANDING") {
 	exit();
 } else {
 	$availableSavings = AvailableSavings($MembershipNumber);
+	if ($availableSavings <= 0) {
+		$_SESSION['Error'] = "You currently have no available savings. You cannot request a loan at this time.";
+		header('Location: requestLoan.php');
+		exit();
+	}
 	$amountAboveBorrower = $Principal - $availableSavings;
 
 	//Validate additional guarantor coverage when the loan exceeds the borrower's available savings
