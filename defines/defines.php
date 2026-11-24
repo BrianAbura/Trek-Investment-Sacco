@@ -7,14 +7,14 @@ define( 'LOG_FILE', '/var/log/Trekinvestment/Trekinvestment.log');
 
 define( 'DB_HOST', 'localhost' );
 define('DB_USER', 'dbadmin');
-define('DB_PASS', 'dbpass');
+define('DB_PASS', 'MS@db12');
 define( 'DB_NAME', 'trek_investment' );
 
 /** SMS */
 // define( 'SMS_URL', 'https://www.lyptustech.com/lyptus-api/sms/' );
 define( 'SMS_URL', 'http://109.74.198.99/lyptus-api/sms/' );
 define( 'SMS_USER', 'T-REK-SMS_1001' );
-define( 'SMS_PASS', 'LPYT_R3K-SMS_9876' );
+define( 'SMS_PASS', 'LPYT_R3K-SMS_9876-' );
 define( 'CLIENT_ID', '29575' );
 
 /** EMAIL */
