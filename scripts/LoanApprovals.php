@@ -43,7 +43,7 @@ if (!$loan) {
 			//Update the Loan with the Disbursement Date picked by the Treasurer
 			$DisbursedOn = date('Y-m-d H:i:s', strtotime($DisbursementDate));
 			$UpdateLoan = array(
-				"DateUpdated" => $DisbursedOn,
+				"DisbursementDate" => $DisbursedOn,
 				"DueDate" => date('Y-m-d H:i:s', strtotime($DisbursedOn . ' + 1 months')),
 			);
 			DB::update('loanrequests', $UpdateLoan, 'LoanId=%s', $LoanId);

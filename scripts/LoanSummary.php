@@ -19,7 +19,7 @@ if($_REQUEST['LoanID']) {
       <div class="row">
         <div class="form-group col-sm-2">
         <label for="InputAmount">Date Requested</label>
-        <h5><?php echo date_format(date_create($loan['DateCreated']), 'd-M-Y');?></h5>
+        <h5><?php echo date_format(date_create($loan['DateCreated']), 'd-m-Y');?></h5>
         </div>
 
         <div class="form-group col-sm-2">
@@ -40,6 +40,11 @@ if($_REQUEST['LoanID']) {
         <div class="form-group col-sm-2">
         <label for="InputAmount">Total Amount</label>
         <h5><?php echo number_format($loan['TotalAmount']);?></h5>
+        </div>
+
+         <div class="form-group col-sm-2">
+        <label for="InputAmount">Disbursement Date</label>
+        <h5><?php echo $loan['DisbursementDate'] ? date_format(date_create($loan['DisbursementDate']), 'd-m-Y') : 'N/A';?></h5>
         </div>
       </div>
 
@@ -76,7 +81,7 @@ if($_REQUEST['LoanID']) {
                   <td><?php echo $approval['Status'];?></td>
                   <td><?php echo $approval['ReviewBy'];?></td>
                   <td><?php echo $approval['Narration'];?></td>
-                  <td><?php echo date_format(date_create($approval['Date']), 'd-m-Y H:i:s');?></td>
+                  <td><?php echo date_format(date_create($approval['Date']), 'd-m-Y');?></td>
                 </tr>
                 <?php 
                 $cnt++;
@@ -122,7 +127,7 @@ if($_REQUEST['LoanID']) {
                   <td><?php echo number_format($action['Amount']);?></td>
                   <td><?php echo number_format($closingBal);?></td>
                   <td><?php echo $action['TransactionType'];?></td>
-                  <td><?php echo date_format(date_create($action['DateAdded']), 'd-M-Y');?></td>
+                  <td><?php echo date_format(date_create($action['DateAdded']), 'd-m-Y');?></td>
                 </tr>
                 <?php 
                 $openingBal = $closingBal;
